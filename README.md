@@ -1,2 +1,2 @@
-# Rgitings_React
+# Rgiftings_React
 Frontnend
