@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 
-const API_BASE = '/api';
+const API_BASE = 'http://localhost:8080/api';
 
 const emptyProduct = {
   productName: '',
@@ -46,7 +46,7 @@ export default function App() {
     try {
       const response = await fetch(`${API_BASE}/products`);
       if (!response.ok) {
-        throw new Error('Unable to fetch products.');
+        throw new Error('Unable to  products.');
       }
       const data = await response.json();
       setProducts(Array.isArray(data) ? data : []);
@@ -72,6 +72,7 @@ export default function App() {
     event.preventDefault();
     const method = editingProductId ? 'PUT' : 'POST';
     const url = editingProductId ? `${API_BASE}/product/${editingProductId}` : `${API_BASE}/product`;
+    console.log(url);
     const payload = {
       ...productForm,
       productPrice: Number(productForm.productPrice) || 0,
