@@ -411,6 +411,55 @@ button.danger {
   gap: 12px;
 }
 
+.stacked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.list-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.attribute-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #312e81;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pill.muted {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.form-actions.compact {
+  margin-top: 18px;
+}
+
 .order-table {
   margin-top: 12px;
   border: 1px solid #e2e8f0;
