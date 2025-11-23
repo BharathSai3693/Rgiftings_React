@@ -16,5 +16,9 @@ The UI talks to the following endpoints relative to the same origin:
 - `PUT /api/product/{id}`
 - `DELETE /api/product/{id}`
 - `POST /api/order/place`
+- `GET /api/attribute`
+- `POST /api/attribute`
+- `PUT /api/attribute/{id}`
+- `DELETE /api/attribute/{id}`
 
 Set up your backend to serve these routes or proxy them from the Vite dev server.

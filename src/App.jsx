@@ -13,6 +13,8 @@ const emptyProduct = {
 
 const createEmptyOrderItem = () => ({ productId: '', quantity: 1, itemPrice: '' });
 
+const emptyAttribute = { name: '', description: '', values: [{ valueName: '', valueDescription: '' }] };
+
 const featureHighlights = [
   {
     title: 'Curated gift boxes',
@@ -39,9 +41,12 @@ const parseHashRoute = () => {
 
 export default function App() {
   const [products, setProducts] = useState([]);
+  const [attributes, setAttributes] = useState([]);
   const [orders, setOrders] = useState([]);
   const [productForm, setProductForm] = useState(emptyProduct);
   const [editingProductId, setEditingProductId] = useState(null);
+  const [attributeForm, setAttributeForm] = useState(emptyAttribute);
+  const [editingAttributeId, setEditingAttributeId] = useState(null);
   const [orderForm, setOrderForm] = useState({
     userId: '',
     guestEmail: '',
@@ -51,6 +56,7 @@ export default function App() {
   });
   const [toast, setToast] = useState({ type: 'info', message: 'Loading products...' });
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingAttributes, setLoadingAttributes] = useState(false);
   const [route, setRoute] = useState(parseHashRoute);
 
   const productOptions = useMemo(
@@ -60,6 +66,7 @@ export default function App() {
 
   useEffect(() => {
     loadProducts();
+    loadAttributes();
   }, []);
 
   useEffect(() => {
@@ -96,6 +103,25 @@ export default function App() {
     }
   };
 
+  const getAttributeId = (attribute) => attribute?.attributeTypeId ?? attribute?.id ?? attribute?.attributeId;
+
+  const loadAttributes = async () => {
+    setLoadingAttributes(true);
+    try {
+      const response = await fetch(`${API_BASE}/attribute`);
+      if (!response.ok) {
+        throw new Error('Unable to fetch attributes.');
+      }
+      const data = await response.json();
+      setAttributes(Array.isArray(data) ? data : []);
+      setToast({ type: 'success', message: 'Attributes loaded.' });
+    } catch (error) {
+      setToast({ type: 'error', message: error.message });
+    } finally {
+      setLoadingAttributes(false);
+    }
+  };
+
   const handleProductChange = (event) => {
     const { name, value } = event.target;
     setProductForm((previous) => ({ ...previous, [name]: value }));
@@ -104,6 +130,11 @@ export default function App() {
   const resetProductForm = () => {
     setProductForm(emptyProduct);
     setEditingProductId(null);
+  };
+
+  const resetAttributeForm = () => {
+    setAttributeForm(emptyAttribute);
+    setEditingAttributeId(null);
   };
 
   const submitProduct = async (event) => {
@@ -148,6 +179,52 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleEditAttribute = (attribute) => {
+    const attributeId = getAttributeId(attribute);
+    if (!attributeId) return;
+    setEditingAttributeId(attributeId);
+    const safeValues = Array.isArray(attribute.values) && attribute.values.length > 0
+      ? attribute.values.map((value) => ({
+          valueName: value.valueName || value.name || value.value || '',
+          valueDescription: value.valueDescription || value.description || '',
+        }))
+      : [{ valueName: '', valueDescription: '' }];
+    setAttributeForm({
+      name: attribute.name || '',
+      description: attribute.description || '',
+      values: safeValues,
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAttributeChange = (event) => {
+    const { name, value } = event.target;
+    setAttributeForm((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const updateAttributeValue = (index, key, value) => {
+    setAttributeForm((previous) => {
+      const values = previous.values.map((item, currentIndex) =>
+        currentIndex === index ? { ...item, [key]: value } : item,
+      );
+      return { ...previous, values };
+    });
+  };
+
+  const addAttributeValueRow = () => {
+    setAttributeForm((previous) => ({
+      ...previous,
+      values: [...previous.values, { valueName: '', valueDescription: '' }],
+    }));
+  };
+
+  const removeAttributeValueRow = (index) => {
+    setAttributeForm((previous) => ({
+      ...previous,
+      values: previous.values.filter((_, currentIndex) => currentIndex !== index),
+    }));
+  };
+
   const deleteProduct = async (productId) => {
     if (!window.confirm('Delete this product?')) return;
 
@@ -158,6 +235,54 @@ export default function App() {
       }
       setProducts((previous) => previous.filter((product) => product.productId !== productId));
       setToast({ type: 'success', message: 'Product deleted.' });
+    } catch (error) {
+      setToast({ type: 'error', message: error.message });
+    }
+  };
+
+  const submitAttribute = async (event) => {
+    event.preventDefault();
+    const method = editingAttributeId ? 'PUT' : 'POST';
+    const url = editingAttributeId ? `${API_BASE}/attribute/${editingAttributeId}` : `${API_BASE}/attribute`;
+
+    const values = (attributeForm.values || [])
+      .filter((item) => item.valueName?.trim())
+      .map((item) => ({
+        valueName: item.valueName.trim(),
+        valueDescription: item.valueDescription?.trim() || '',
+      }));
+
+    const payload = { ...attributeForm, values };
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        throw new Error('Unable to save attribute.');
+      }
+      await loadAttributes();
+      setToast({ type: 'success', message: editingAttributeId ? 'Attribute updated.' : 'Attribute created.' });
+      resetAttributeForm();
+    } catch (error) {
+      setToast({ type: 'error', message: error.message });
+    }
+  };
+
+  const deleteAttribute = async (attribute) => {
+    const attributeId = getAttributeId(attribute);
+    if (!attributeId) return;
+    if (!window.confirm('Delete this attribute?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/attribute/${attributeId}`, { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error('Unable to delete attribute.');
+      }
+      setAttributes((previous) => previous.filter((item) => getAttributeId(item) !== attributeId));
+      setToast({ type: 'success', message: 'Attribute deleted.' });
     } catch (error) {
       setToast({ type: 'error', message: error.message });
     }
@@ -301,6 +426,25 @@ export default function App() {
             reloadProducts={loadProducts}
           />
         );
+      case 'attributes':
+        return (
+          <AttributesPage
+            attributeForm={attributeForm}
+            handleAttributeChange={handleAttributeChange}
+            updateAttributeValue={updateAttributeValue}
+            addAttributeValueRow={addAttributeValueRow}
+            removeAttributeValueRow={removeAttributeValueRow}
+            submitAttribute={submitAttribute}
+            resetAttributeForm={resetAttributeForm}
+            attributes={attributes}
+            handleEditAttribute={handleEditAttribute}
+            deleteAttribute={deleteAttribute}
+            editingAttributeId={editingAttributeId}
+            loadingAttributes={loadingAttributes}
+            reloadAttributes={loadAttributes}
+            getAttributeId={getAttributeId}
+          />
+        );
       default:
         return (
           <HomePage
@@ -356,6 +500,9 @@ function SiteHeader({ toast, navigate }) {
         </button>
         <button type="button" className="ghost" onClick={() => navigate('orders')}>
           Order history
+        </button>
+        <button type="button" className="ghost" onClick={() => navigate('attributes')}>
+          Attributes
         </button>
         <button type="button" className="ghost" onClick={() => navigate('admin')}>
           Admin
@@ -826,6 +973,159 @@ function AdminPage({
               </div>
             </article>
           ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function AttributesPage({
+  attributeForm,
+  handleAttributeChange,
+  updateAttributeValue,
+  addAttributeValueRow,
+  removeAttributeValueRow,
+  submitAttribute,
+  resetAttributeForm,
+  attributes,
+  handleEditAttribute,
+  deleteAttribute,
+  editingAttributeId,
+  loadingAttributes,
+  reloadAttributes,
+  getAttributeId,
+}) {
+  return (
+    <div className="admin-grid">
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Attributes</p>
+            <h2>{editingAttributeId ? 'Edit attribute' : 'Create attribute'}</h2>
+          </div>
+          {editingAttributeId && (
+            <button type="button" className="ghost" onClick={resetAttributeForm}>
+              Cancel edit
+            </button>
+          )}
+        </div>
+        <form className="form" onSubmit={submitAttribute}>
+          <label>
+            <span>Name</span>
+            <input
+              required
+              name="name"
+              value={attributeForm.name}
+              onChange={handleAttributeChange}
+              placeholder="Color"
+            />
+          </label>
+          <label>
+            <span>Description</span>
+            <textarea
+              name="description"
+              value={attributeForm.description}
+              onChange={handleAttributeChange}
+              placeholder="Optional description to help admins"
+            />
+          </label>
+          <div className="order-items">
+            <div className="order-items-header">
+              <div>
+                <p className="eyebrow">Values</p>
+                <p className="muted">Add one or more values for this attribute.</p>
+              </div>
+              <button type="button" className="ghost" onClick={addAttributeValueRow}>
+                Add value
+              </button>
+            </div>
+            {attributeForm.values.map((value, index) => (
+              <div key={index} className="order-item-row">
+                <label>
+                  <span>Value name</span>
+                  <input
+                    required
+                    value={value.valueName}
+                    onChange={(event) => updateAttributeValue(index, 'valueName', event.target.value)}
+                    placeholder="Red"
+                  />
+                </label>
+                <label>
+                  <span>Value description</span>
+                  <input
+                    value={value.valueDescription}
+                    onChange={(event) => updateAttributeValue(index, 'valueDescription', event.target.value)}
+                    placeholder="Optional helper text"
+                  />
+                </label>
+                {attributeForm.values.length > 1 && (
+                  <div className="form-actions compact">
+                    <button
+                      className="ghost"
+                      type="button"
+                      onClick={() => removeAttributeValueRow(index)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="form-actions">
+            <button className="primary" type="submit">
+              {editingAttributeId ? 'Update attribute' : 'Create attribute'}
+            </button>
+            <button className="ghost" type="button" onClick={resetAttributeForm}>
+              Reset
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Attribute library</p>
+            <h2>Manage attributes</h2>
+          </div>
+          <button className="ghost" type="button" onClick={reloadAttributes} disabled={loadingAttributes}>
+            {loadingAttributes ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+        <div className="stacked-list">
+          {loadingAttributes && <p className="muted">Loading attributes…</p>}
+          {!loadingAttributes && attributes.length === 0 && <p className="muted">No attributes yet.</p>}
+          {attributes.map((attribute) => {
+            const attributeId = getAttributeId(attribute);
+            return (
+              <article key={attributeId || attribute.name} className="list-card">
+                <div className="list-card__header">
+                  <div>
+                    <p className="eyebrow">ID: {attributeId ?? '—'}</p>
+                    <h3>{attribute.name || 'Untitled attribute'}</h3>
+                  </div>
+                  <div className="card-actions">
+                    <button type="button" onClick={() => handleEditAttribute(attribute)}>
+                      Edit
+                    </button>
+                    <button className="danger" type="button" onClick={() => deleteAttribute(attribute)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                <p className="muted">{attribute.description || 'No description provided.'}</p>
+                <div className="attribute-values">
+                  {(attribute.values || []).map((value, index) => (
+                    <span key={value.valueName || value.name || value.value || index} className="pill">
+                      {value.valueName || value.name || value.value || 'Value'}
+                    </span>
+                  ))}
+                  {(attribute.values || []).length === 0 && <span className="pill muted">No values</span>}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
     </div>
