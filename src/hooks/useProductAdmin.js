@@ -18,16 +18,22 @@ export function useProductAdmin({ attributes, setToast, loadProducts, setProduct
       navigate('products', product.id);
     }
     setEditingProductId(product.id);
+    const sourceAttributes = product.attributes || product.productAttributes || [];
     const safeAttributes =
-      Array.isArray(product.attributes) && product.attributes.length > 0
-        ? product.attributes.map((attribute) => ({
+      Array.isArray(sourceAttributes) && sourceAttributes.length > 0
+        ? sourceAttributes.map((attribute) => ({
             productAttributeId: attribute.productAttributeId ?? attribute.id ?? null,
             attributeTypeId: attribute.attributeTypeId ?? attribute.attributeId ?? '',
             label: attribute.label || '',
-            values: (attribute.values || []).map((value) => ({
+            values: (
+              attribute.productAttributeValues ||
+              attribute.productAttributeValueResponses ||
+              attribute.values ||
+              []
+            ).map((value) => ({
               productAttributeValueId: value.productAttributeValueId ?? value.id ?? null,
-              attributeValueId: value.attributeValueId ?? '',
-              valueLabel: value.valueLabel || value.value || '',
+              attributeValueId: value.attributeValueId ?? value.AttributeValueId ?? '',
+              valueLabel: value.attributeValueName || value.value || '',
               extraPrice: Number(value.extraPrice ?? 0),
             })),
           }))
@@ -64,7 +70,11 @@ export function useProductAdmin({ attributes, setToast, loadProducts, setProduct
     const payload = editingProductId
       ? buildUpdateProductPayload(productForm, editingProductId)
       : buildCreateProductPayload(productForm);
-    console.log('Submitting product payload', payload);
+    console.log(`[ProductAdmin] ${editingProductId ? 'Updating' : 'Creating'} product`, {
+      method,
+      url,
+      payload,
+    });
 
     try {
       const response = await fetch(url, {
@@ -126,7 +136,7 @@ export function useProductAdmin({ attributes, setToast, loadProducts, setProduct
           ? {
               ...item,
               attributeTypeId: normalizedId,
-              label: item.label || attributeDef?.type || '',
+              label: item.label || attributeDef?.name || '',
               values: [],
             }
           : item,

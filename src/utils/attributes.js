@@ -1,19 +1,25 @@
 export const createEmptyAttribute = () => ({
-  type: '',
-  description: '',
-  values: [{ id: null, value: '', displayCode: '' }],
+  id: null,
+  name: '',
+  inputType: 'TEXT',
+  attributeValues: [{ id: null, value: '' }],
 });
 
 export const getAttributeTypeId = (attribute) =>
-  attribute?.attributeTypeId ?? attribute?.attributeId ?? attribute?.typeId ?? attribute?.id ?? null;
+  attribute?.id ?? attribute?.typeId ?? attribute?.attributeTypeId ?? null;
 
-export const normalizeAttributeType = (attribute) => ({
-  id: getAttributeTypeId(attribute),
-  type: attribute?.type || attribute?.name || '',
-  description: attribute?.description || '',
-  values: (attribute?.attributeValues || attribute?.values || []).map((value) => ({
-    id: value?.id ?? value?.attributeValueId ?? value?.valueId ?? null,
-    displayCode: value?.displayCode || '',
-    value: value?.value || value?.name || value?.valueName || '',
-  })),
-});
+export const normalizeAttributeType = (attribute) => {
+  const typeId = getAttributeTypeId(attribute);
+  return {
+    id: typeId,
+    name: attribute?.name || attribute?.type || '',
+    inputType: attribute?.inputType || 'TEXT',
+    attributeValues: (attribute?.attributeValues || attribute?.values || []).map((value) => {
+      const valueId = value?.id ?? value?.valueId ?? value?.attributeValueId ?? null;
+      return {
+        id: valueId,
+        value: value?.value || value?.name || value?.valueName || '',
+      };
+    }),
+  };
+};

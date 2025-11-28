@@ -13,24 +13,24 @@ export function useAttributeAdmin({ setToast, loadAttributes, setAttributes, nav
 
   const updateAttributeValue = (index, key, value) => {
     setAttributeForm((previous) => {
-      const values = (previous.values || []).map((item, currentIndex) =>
+      const attributeValues = (previous.attributeValues || []).map((item, currentIndex) =>
         currentIndex === index ? { ...item, [key]: value } : item,
       );
-      return { ...previous, values };
+      return { ...previous, attributeValues };
     });
   };
 
   const addAttributeValueRow = () => {
     setAttributeForm((previous) => ({
       ...previous,
-      values: [...(previous.values || []), { id: null, value: '', displayCode: '' }],
+      attributeValues: [...(previous.attributeValues || []), { id: null, value: '' }],
     }));
   };
 
   const removeAttributeValueRow = (index) => {
     setAttributeForm((previous) => ({
       ...previous,
-      values: (previous.values || []).filter((_, currentIndex) => currentIndex !== index),
+      attributeValues: (previous.attributeValues || []).filter((_, currentIndex) => currentIndex !== index),
     }));
   };
 
@@ -50,23 +50,25 @@ export function useAttributeAdmin({ setToast, loadAttributes, setAttributes, nav
     event.preventDefault();
     const method = editingAttributeId ? 'PUT' : 'POST';
     const url = editingAttributeId ? `${API_BASE}/attribute/${editingAttributeId}` : `${API_BASE}/attribute`;
-    const values = (attributeForm.values || [])
-      .filter((item) => item.value?.trim() || item.displayCode?.trim())
+    const attributeValues = (attributeForm.attributeValues || [])
+      .filter((item) => item.value?.trim())
       .map((item) => ({
-        id: item.id ?? item.attributeValueId ?? item.valueId ?? null,
+        id: item.id ?? null,
         value: item.value.trim(),
-        displayCode: item.displayCode?.trim() || '',
       }));
 
-    const basePayload = {
-      id: editingAttributeId ?? null,
-      type: attributeForm.type.trim(),
-      description: attributeForm.description?.trim() || '',
-    };
-
     const payload = editingAttributeId
-      ? { ...basePayload, attributeValues: values }
-      : { ...basePayload, id: undefined, attributeValueRequests: values };
+      ? {
+          id: editingAttributeId,
+          name: attributeForm.name.trim(),
+          inputType: attributeForm.inputType || 'TEXT',
+          attributeValues,
+        }
+      : {
+          name: attributeForm.name.trim(),
+          inputType: attributeForm.inputType || 'TEXT',
+          attributeValues,
+        };
     console.log('Submitting attribute payload', payload);
     try {
       const response = await fetch(url, {
@@ -93,17 +95,17 @@ export function useAttributeAdmin({ setToast, loadAttributes, setAttributes, nav
     }
     setEditingAttributeId(attributeId);
     const safeValues =
-      Array.isArray(attribute.values) && attribute.values.length > 0
-        ? attribute.values.map((value) => ({
-            id: value.id ?? value.valueId ?? value.attributeValueId ?? null,
+      Array.isArray(attribute.attributeValues) && attribute.attributeValues.length > 0
+        ? attribute.attributeValues.map((value) => ({
+            id: value.id ?? null,
             value: value.value || '',
-            displayCode: value.displayCode || '',
           }))
-        : [{ id: null, value: '', displayCode: '' }];
+        : [{ id: null, value: '' }];
     setAttributeForm({
-      type: attribute.type || '',
-      description: attribute.description || '',
-      values: safeValues,
+      id: attributeId,
+      name: attribute.name || '',
+      inputType: attribute.inputType || 'TEXT',
+      attributeValues: safeValues,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

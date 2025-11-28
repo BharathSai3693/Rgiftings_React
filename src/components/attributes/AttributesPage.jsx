@@ -62,9 +62,9 @@ export function AttributesPage({
             <div>
               <p className="eyebrow">Attribute detail</p>
               <h2>
-                {selectedAttribute.type || 'Untitled attribute'} (ID: {getAttributeTypeId(selectedAttribute) ?? '—'})
+                {selectedAttribute.name || 'Untitled attribute'} (ID: {getAttributeTypeId(selectedAttribute) ?? '—'})
               </h2>
-              <p className="muted">{selectedAttribute.description || 'No description provided.'}</p>
+              <p className="muted">Input Type: {selectedAttribute.inputType || '—'}</p>
             </div>
             <div className="card-actions">
               <button className="ghost" type="button" onClick={() => navigate('attributes')}>
@@ -79,13 +79,12 @@ export function AttributesPage({
             </div>
           </div>
           <div className="attribute-values">
-            {(selectedAttribute.values || []).map((value, index) => (
-              <span key={value.displayCode || value.value || index} className="pill">
-                ID: {value.id || value.valueId || value.attributeValueId || '—'} · {value.displayCode || '—'} ·{' '}
-                {value.value || 'Value'}
+            {(selectedAttribute.attributeValues || []).map((value, index) => (
+              <span key={value.id || index} className="pill">
+                ID: {value.id || '—'} · {value.value || 'Value'}
               </span>
             ))}
-            {(selectedAttribute.values || []).length === 0 && <span className="pill muted">No values</span>}
+            {(selectedAttribute.attributeValues || []).length === 0 && <span className="pill muted">No values</span>}
           </div>
         </section>
       </div>
@@ -116,16 +115,16 @@ export function AttributesPage({
             const active = `${route.id}` === `${attributeId}`;
             return (
               <article
-                key={attributeId || attribute.type}
+                key={attributeId || attribute.name}
                 className={`tile-card ${active ? 'active' : ''}`}
                 onClick={() => navigate('attributes', attributeId)}
               >
                 <div className="tile-content">
                   <p className="eyebrow">ID: {attributeId ?? '—'}</p>
-                  <h3>{attribute.type || 'Untitled attribute'}</h3>
-                  <p className="muted one-line">{attribute.description || 'No description provided.'}</p>
+                  <h3>{attribute.name || 'Untitled attribute'}</h3>
+                  <p className="muted one-line">Type: {attribute.inputType || '—'}</p>
                   <div className="mini-pills">
-                    <span className="pill muted">Values: {(attribute.values || []).length}</span>
+                    <span className="pill muted">Values: {(attribute.attributeValues || []).length}</span>
                   </div>
                   <div className="card-actions">
                     <button

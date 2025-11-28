@@ -9,6 +9,7 @@ export function useProductsData(setToast) {
   const loadProducts = useCallback(async () => {
     setLoadingProducts(true);
     try {
+      console.log('[ProductsData] Fetching products…');
       const response = await fetch(`${API_BASE}/products`);
       const rawBody = await response.text();
       if (!response.ok) {

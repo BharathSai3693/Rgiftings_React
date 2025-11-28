@@ -14,17 +14,27 @@ export const createEmptyProduct = () => ({
 const normalizeProductAttributeValue = (value) => ({
   productAttributeValueId: value?.id ?? value?.productAttributeValueId ?? null,
   attributeValueId: value?.attributeValueId ?? value?.valueId ?? value?.id ?? null,
-  valueLabel: value?.value || value?.name || value?.valueName || '',
+  valueLabel: value?.attributeValueName || value?.value || value?.name || value?.valueName || '',
   extraPrice: Number(value?.extraPrice ?? 0),
 });
 
 const normalizeProductAttribute = (attribute) => {
-  const attributeTypeId = getAttributeTypeId(attribute);
+  const attributeTypeId = attribute?.attributeTypeId ?? attribute?.id ?? null;
+  const values =
+    attribute?.productAttributeValues ||
+    attribute?.productAttributeValueResponses ||
+    attribute?.values ||
+    attribute?.attributeValues ||
+    attribute?.productAttributeValueRequestList ||
+    [];
+
   return {
     productAttributeId: attribute?.id ?? attribute?.productAttributeId ?? null,
     attributeTypeId,
-    label: attribute?.label || attribute?.type || attribute?.name || '',
-    values: (attribute?.values || attribute?.attributeValues || [])
+    attributeName: attribute?.attributeName || attribute?.type || attribute?.name || '',
+    attributeInputType: attribute?.attributeInputType || '',
+    label: attribute?.productAttributeLabel || attribute?.label || attribute?.attributeName || '',
+    values: values
       .map((value) => normalizeProductAttributeValue(value))
       .filter((value) => value.attributeValueId),
   };
@@ -39,9 +49,13 @@ export const normalizeProduct = (product) => ({
   stock: Number(product?.stock ?? product?.productStock ?? 0),
   category: product?.category ?? product?.productCategory ?? '',
   imageUrl: product?.imageUrl ?? product?.productImageUrl ?? '',
-  attributes: (product?.attributes ?? product?.productAttributes ?? []).map((attribute) =>
-    normalizeProductAttribute(attribute),
-  ),
+  attributes: (
+    product?.attributes ??
+    product?.productAttributes ??
+    product?.productAttributeResponses ??
+    product?.productAttributeRequestList ??
+    []
+  ).map((attribute) => normalizeProductAttribute(attribute)),
   createdAt: product?.createdAt,
   updatedAt: product?.updatedAt,
 });
@@ -59,57 +73,52 @@ export const buildBaseProductPayload = (productForm) => ({
 });
 
 export const buildCreateProductPayload = (productForm) => {
-  const attributes = (productForm.attributes || [])
+  const productAttributes = (productForm.attributes || [])
     .filter((attribute) => attribute.attributeTypeId)
     .map((attribute) => ({
       attributeTypeId: Number(attribute.attributeTypeId) || attribute.attributeTypeId,
-      label: attribute.label?.trim() || '',
-      values: (attribute.values || [])
+      productAttributeLabel: attribute.label?.trim() || '',
+      productAttributeValues: (attribute.values || [])
         .filter((value) => value.attributeValueId)
         .map((value) => ({
           attributeValueId: Number(value.attributeValueId) || value.attributeValueId,
           extraPrice: Number(value.extraPrice) || 0,
         })),
     }))
-    .filter((attribute) => (attribute.values || []).length > 0);
+    .filter((attribute) => (attribute.productAttributeValues || []).length > 0);
 
-  return { ...buildBaseProductPayload(productForm), attributes };
+  return { ...buildBaseProductPayload(productForm), productAttributes };
 };
 
 export const buildUpdateProductPayload = (productForm, productId) => {
-  const productAttributeRequestList = (productForm.attributes || [])
+  const productAttributes = (productForm.attributes || [])
     .filter((attribute) => attribute.attributeTypeId || attribute.productAttributeId)
     .map((attribute) => {
-      const productAttributeValueRequestList = (attribute.values || [])
+      const productAttributeValues = (attribute.values || [])
         .filter((value) => value.attributeValueId)
         .map((value) => ({
           id: value.productAttributeValueId ?? null,
-          AttributeValueId:
-            value.productAttributeValueId != null
-              ? undefined
-              : Number(value.attributeValueId) || value.attributeValueId,
+          attributeValueId: Number(value.attributeValueId) || value.attributeValueId,
           extraPrice: Number(value.extraPrice) || 0,
         }));
 
       return {
         id: attribute.productAttributeId ?? null,
-        attributeTypeId:
-          attribute.productAttributeId != null ? undefined : Number(attribute.attributeTypeId) || attribute.attributeTypeId,
-        label: attribute.label?.trim() || '',
-        productAttributeValueRequestList,
+        attributeTypeId: Number(attribute.attributeTypeId) || attribute.attributeTypeId,
+        productAttributeLabel: attribute.label?.trim() || '',
+        productAttributeValues,
       };
     })
     .filter(
       (attribute) =>
         attribute.id != null ||
         attribute.attributeTypeId != null ||
-        (attribute.productAttributeValueRequestList || []).length > 0,
+        (attribute.productAttributeValues || []).length > 0,
     );
 
   return {
     ...buildBaseProductPayload(productForm),
     id: productId,
-    updatedAt: new Date().toISOString(),
-    productAttributeRequestList,
+    productAttributes,
   };
 };

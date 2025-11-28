@@ -171,7 +171,7 @@ export function ProductForm({
                         <option value="">Select attribute</option>
                         {attributes.map((attribute) => (
                           <option key={attribute.id} value={attribute.id}>
-                            {attribute.type} (ID: {attribute.id})
+                            {attribute.name} (ID: {attribute.id})
                           </option>
                         ))}
                       </select>
@@ -181,7 +181,7 @@ export function ProductForm({
                       <input
                         value={attributeEntry.label}
                         onChange={(event) => updateProductAttributeLabel(index, event.target.value)}
-                        placeholder={attributeDef?.type || 'Color, Size, etc.'}
+                        placeholder={attributeDef?.name || 'Color, Size, etc.'}
                       />
                     </label>
                   </div>
@@ -193,7 +193,7 @@ export function ProductForm({
                 </div>
                 {attributeEntry.attributeTypeId ? (
                   <div className="value-grid">
-                    {(attributeDef?.values || []).map((value) => {
+                    {(attributeDef?.attributeValues || []).map((value) => {
                       const selectedValue = (attributeEntry.values || []).find(
                         (item) => `${item.attributeValueId}` === `${value.id}`,
                       );
@@ -210,11 +210,10 @@ export function ProductForm({
                             />
                             <div className="value-meta">
                               <div className="value-row">
-                                <span className="value-code">{value.displayCode || '—'}</span>
                                 <span className="value-name">{value.value || 'Value'}</span>
                               </div>
                               <p className="value-ids">
-                                TypeValID: {value.id ?? '—'} · AttrValID: {value.attributeValueId ?? value.id ?? '—'}
+                                AttrValID: {value.id ?? '—'}
                               </p>
                             </div>
                           </label>
@@ -235,7 +234,7 @@ export function ProductForm({
                         </div>
                       );
                     })}
-                    {(attributeDef?.values || []).length === 0 && (
+                    {(attributeDef?.attributeValues || []).length === 0 && (
                       <span className="pill muted">No values available for this attribute type</span>
                     )}
                   </div>

@@ -23,23 +23,30 @@ export function AttributesForm({
       </div>
       <form className="form" onSubmit={submitAttribute}>
         <label>
-          <span>Type</span>
+          <span>Name</span>
           <input
             required
-            name="type"
-            value={attributeForm.type}
+            name="name"
+            value={attributeForm.name}
             onChange={handleAttributeChange}
             placeholder="Color, Size, Material"
           />
         </label>
         <label>
-          <span>Description</span>
-          <textarea
-            name="description"
-            value={attributeForm.description}
+          <span>Input Type</span>
+          <select
+            required
+            name="inputType"
+            value={attributeForm.inputType}
             onChange={handleAttributeChange}
-            placeholder="Optional description to help admins"
-          />
+          >
+            <option value="TEXT">Text</option>
+            <option value="FILE">File</option>
+            <option value="DROPDOWN">Dropdown</option>
+            <option value="MULTIPLE">Multiple Select</option>
+            <option value="RADIO">Radio</option>
+            <option value="CHECKBOX">Checkbox</option>
+          </select>
         </label>
         <div className="order-items">
           <div className="order-items-header">
@@ -51,27 +58,18 @@ export function AttributesForm({
               Add value
             </button>
           </div>
-          {attributeForm.values.map((value, index) => (
+          {attributeForm.attributeValues.map((value, index) => (
             <div key={index} className="order-item-row">
-              <label>
-                <span>Display code</span>
-                <input
-                  required
-                  value={value.displayCode}
-                  onChange={(event) => updateAttributeValue(index, 'displayCode', event.target.value)}
-                  placeholder="RED"
-                />
-              </label>
               <label>
                 <span>Value</span>
                 <input
                   required
                   value={value.value}
                   onChange={(event) => updateAttributeValue(index, 'value', event.target.value)}
-                  placeholder="Red"
+                  placeholder="Red, Large, Cotton, etc."
                 />
               </label>
-              {attributeForm.values.length > 1 && (
+              {attributeForm.attributeValues.length > 1 && (
                 <div className="form-actions compact">
                   <button
                     className="ghost"

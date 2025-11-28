@@ -111,8 +111,10 @@ export function ProductAdminPage({
                       className="attribute-chip"
                     >
                       <p className="eyebrow">
-                        ProdAttrID: {attr.productAttributeId ?? '—'} · TypeID: {attr.attributeTypeId ?? '—'} ·{' '}
-                        {attr.label || 'Attribute'}
+                        {attr.attributeName || 'Attribute'} · Label: {attr.label || '—'}
+                      </p>
+                      <p className="muted">
+                        ProdAttrID: {attr.productAttributeId ?? '—'} · TypeID: {attr.attributeTypeId ?? '—'} · Input: {attr.attributeInputType || '—'}
                       </p>
                       <div className="pill-row">
                         {(attr.values || []).map((value, valIdx) => (
@@ -120,9 +122,7 @@ export function ProductAdminPage({
                             key={value.productAttributeValueId ?? value.attributeValueId ?? valIdx}
                             className="pill"
                           >
-                            AttrValID: {value.attributeValueId ?? '—'} · ProdAttrValID:{' '}
-                            {value.productAttributeValueId ?? '—'}
-                            {value.valueLabel || value.value ? ` · ${value.valueLabel || value.value}` : ''}
+                            {value.valueLabel || value.value || 'Value'}
                             {value.extraPrice ? ` (+$${Number(value.extraPrice).toFixed(2)})` : ''}
                           </span>
                         ))}
